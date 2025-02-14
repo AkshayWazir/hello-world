@@ -25,7 +25,7 @@ export class TodosComponent implements OnInit {
 
   private async fetchTodos() {
     try {
-      const todos = await firstValueFrom(this.todoService.getTodosFromApi());
+      const todos = await this.todoService.getTodos();
       this.todoItems.set(todos);
     } catch (err) {
       console.error('Error fetching todos:', err);
