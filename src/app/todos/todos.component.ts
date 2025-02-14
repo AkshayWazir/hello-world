@@ -1,39 +1,42 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { TodosService } from '../services/todos.service';
 import { Todo } from '../model/todo.type';
-import { catchError } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { TodoItemComponent } from '../component/todo-item/todo-item.component';
 
 @Component({
   selector: 'app-todos',
+  standalone: true,
   imports: [TodoItemComponent],
   templateUrl: './todos.component.html',
   styleUrl: './todos.component.css',
 })
 export class TodosComponent implements OnInit {
-  todoService = inject(TodosService);
-  todoItems = signal<Array<Todo>>([]);
+  private todoService = inject(TodosService);
+  todoItems = signal<Todo[]>([]);
 
-  ngOnInit(): void {
-    this.todoService
-      .getTodosFromApi()
-      .pipe(
-        catchError((err) => {
-          console.log(err);
-          throw err;
-        })
-      )
-      .subscribe((todos) => {
-        this.todoItems.set(todos);
-      });
+  completedCount = computed(
+    () => this.todoItems().filter((todo) => todo.completed).length
+  );
+
+  async ngOnInit(): Promise<void> {
+    await this.fetchTodos();
+  }
+
+  private async fetchTodos() {
+    try {
+      const todos = await firstValueFrom(this.todoService.getTodosFromApi());
+      this.todoItems.set(todos);
+    } catch (err) {
+      console.error('Error fetching todos:', err);
+      this.todoItems.set([]);
+    }
   }
 
   todoToggled(todo: Todo) {
-    this.todoItems.update((old) =>
-      old.map((oldItem) =>
-        oldItem.id === todo.id
-          ? { ...todo, completed: !todo.completed }
-          : oldItem
+    this.todoItems.update((todos) =>
+      todos.map((item) =>
+        item.id === todo.id ? { ...item, completed: !item.completed } : item
       )
     );
   }

@@ -1,10 +1,14 @@
 <h3>Todo List</h3>
-@if (!todoItems().length) {
-<p>Loading..</p>
-}
 
+@if (todoItems().length === 0) {
+<p>Loading...</p>
+} @else {
 <ul>
-  @for (item of todoItems(); track $index) {
-  <app-todo-item [todo]="item" (todoToggled)="todoToggled($event)" />
+  @for (item of todoItems(); track item.id) {
+  <app-todo-item
+    [todo]="item"
+    (todoToggled)="todoToggled($event)"
+  ></app-todo-item>
   }
 </ul>
+}
